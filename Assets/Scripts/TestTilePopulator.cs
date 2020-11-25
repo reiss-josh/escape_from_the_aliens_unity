@@ -6,24 +6,16 @@ using UnityEngine.Tilemaps;
 public class TestTilePopulator : MonoBehaviour
 {
     private Tilemap tilemap;
-    public Tile tileguy;
-    public Tile tileguy2;
+    public Tile[] tileArr;
     private Grid gridparent;
+    private int[,] MapArr;
     // Start is called before the first frame update
     void Start()
     {
         tilemap = GetComponent<Tilemap>();
         gridparent = transform.parent.GetComponent<Grid>();
-        //places 1-14
-        for(int i = 1; i <= 14; i++)
-        {
-            //places A-W
-            for(int j = 1; j <= 23; j++)
-            {
-                tilemap.SetTile(new Vector3Int(-i, j, 0), tileguy);
-            }
-        }
-        
+        TestLoadingMaps mapLoader = (TestLoadingMaps)FindObjectOfType(typeof(TestLoadingMaps));
+        MapArr = mapLoader.MapArray;
     }
 
     void Update()
@@ -42,7 +34,19 @@ public class TestTilePopulator : MonoBehaviour
 
             //get the center of the cell in worldpos
             var worldpos = gridparent.GetCellCenterWorld(cellPos);
-            tilemap.SetTile(cellPos, tileguy2);
+            var b = tilemap.GetTile(cellPos);
+            Debug.Log(b);
+            tilemap.SetTile(cellPos, tileArr[1]);
+        }
+        if (Input.GetMouseButtonDown(1))
+        {
+            for(int i = 0; i < MapArr.GetLength(0); i++)
+            {
+                for(int j = 0; j < MapArr.GetLength(1); j++)
+                {
+                    tilemap.SetTile(new Vector3Int(j,i+1,0), tileArr[MapArr[i,j]]);
+                }
+            }
         }
     }
 

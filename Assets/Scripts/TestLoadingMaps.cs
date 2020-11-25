@@ -8,7 +8,7 @@ using System.IO;
 public class TestLoadingMaps : MonoBehaviour
 {
     private RawImage img;
-    public string startdir = "D:/GitRepos/web_alien_outerspace/Assets/Maps/";
+    public string startdir = "Assets/Maps/";
     public string filename = "galvani";
     public string fileext = ".jpg";
 
@@ -16,7 +16,7 @@ public class TestLoadingMaps : MonoBehaviour
     public int checkSize = 10;
     public Vector2Int hexOffset = new Vector2Int(188,109);
     public Vector2Int borderOffset = new Vector2Int(75,90);
-    public int[,] MapArray = new int[24,14];
+    public int[,] MapArray = new int[23,14];
 
     // Start is called before the first frame update
     void Start()
@@ -30,10 +30,8 @@ public class TestLoadingMaps : MonoBehaviour
         if (Input.GetKeyDown("space"))
         {
             var sourceTex = LoadPNG(startdir + filename + fileext);
-            MapArray = ConvertToMapArray(sourceTex, MapArray);
-
-            //debug stuff
-            img.texture = ConvertToMapTexture(sourceTex);
+            (img.texture, MapArray) = ConvertToMapArray(sourceTex, MapArray);
+            //DebugLogArr2Dim<int>(MapArray);
         }
     }
 
@@ -63,7 +61,6 @@ public class TestLoadingMaps : MonoBehaviour
     //loads a PNG from file as Texture2D
     public static Texture2D LoadPNG(string filePath)
     {
-
         Texture2D tex = null;
         byte[] fileData;
 
@@ -77,7 +74,8 @@ public class TestLoadingMaps : MonoBehaviour
     }
 
     //converts a Texture2D into a 2-D integer array
-    public int[,] ConvertToMapArray(Texture2D sourceTex, int[,] MapArray)
+    //also draws debug info onto the passed texture
+    public (Texture2D, int[,]) ConvertToMapArray(Texture2D sourceTex, int[,] MapArray)
     {
         var pix = sourceTex.GetPixels32();
         int width = sourceTex.width;
@@ -89,50 +87,30 @@ public class TestLoadingMaps : MonoBehaviour
                 {
                     int cellType = DetermineCellType(pix, xInd + yInd * width, width);
                     MapArray[xReal, yReal] = cellType;
+                    pix = DoodleAtPoint(pix, xInd, yInd, width, cellType, checkSize);
                     //Debug.Log(xReal + "," + yReal);
-                    xReal+=2;
+                    xReal +=2;
                 }
                 yReal++;
             }
         }
-        return MapArray;
-    }
-    
-    //takes a Texture2D and marks what each cell is being seen as
-    //useful to make sure your offset values are dialed in correctly
-    public Texture2D ConvertToMapTexture(Texture2D sourceTex)
-    {
-        var pix = sourceTex.GetPixels32();
-        int width = sourceTex.width;
-        for (int BRD = 0; BRD <= 1; BRD++)
-        {
-            for (int yInd = borderOffset.y-BRD * (hexOffset.y / 2); yInd < upperBound; yInd += hexOffset.y)
-            {
-                for (int xInd = borderOffset.x+BRD * (hexOffset.x / 2); xInd < width; xInd += hexOffset.x)
-                {
-                    int cellType = DetermineCellType(pix, xInd + yInd * width, width);
-                    pix = DoodleAtPoint(pix, xInd, yInd, width, cellType);
-                }
-            }
-        }
-
         // Copy the reversed image data to a new texture.
         var destTex = new Texture2D(sourceTex.width, sourceTex.height);
         destTex.SetPixels32(pix);
         destTex.Apply();
-        return destTex;
+        return (destTex, MapArray);
     }
 
     //draw colored debugsquare
-    public Color32[] DoodleAtPoint(Color32[] pix, int xInd, int yInd, int width, int cellType)
+    public static Color32[] DoodleAtPoint(Color32[] pix, int xInd, int yInd, int width, int cellType, int rectSize = 0)
     {
         int currPix = xInd + yInd * width;
 
         //create colors
-        var black = new Color32(100, 255, 255, 255); //black cell
-        var grey = new Color32(255, 255, 100, 255); //grey cell
-        var white = new Color32(255, 100, 255, 255); //white cell
-        var red = new Color32(200, 200, 200, 255); //debug
+        var black   = new Color32(100, 255, 255, 255); //black cell
+        var grey    = new Color32(255, 255, 100, 255); //grey cell
+        var white   = new Color32(255, 100, 255, 255); //white cell
+        var red     = new Color32(200, 200, 200, 255); //debug
 
         //set color based on celltype
         var chosencolor = red;
@@ -141,13 +119,31 @@ public class TestLoadingMaps : MonoBehaviour
         if (cellType == 2) chosencolor = white;
 
         //draw a square of color
-        int r = checkSize;
-        for (int e = -r; e <= r; e++)
+        if (rectSize > 0)
         {
-            for (int d = -r; d <= r; d++)
-                pix[d + e * width + currPix] = chosencolor;
+            for (int e = -rectSize; e <= rectSize; e++)
+            {
+                for (int d = -rectSize; d <= rectSize; d++)
+                    pix[d + e * width + currPix] = chosencolor;
+            }
         }
 
         return pix;
+    }
+
+    private void DebugLogArr2Dim <T>(T[,] printArr)
+    {
+        string[] result = new string[printArr.GetLength(0)];
+        for(int i = 0; i < printArr.GetLength(0); i++)
+        {
+            string entry = "";
+            for(int j = 0; j < printArr.GetLength(1); j++)
+            {
+                entry += "(" + i + "," + j + "): " + printArr[i, j] + "\n";
+            }
+            result[i] = entry;
+        }
+        for(int i = 0; i < result.Length; i++)
+            Debug.Log(result[i]);
     }
 }
