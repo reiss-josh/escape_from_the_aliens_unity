@@ -1,0 +1,20 @@
+There is a Network Manager object.
+It contains references to each player's UI Box.
+These references are then given to the Game Manager.
+
+At game start, there is a menu with options, etc
+Starting the game loads a lobby room where all the players stand around a table.
+The host alone can interact with the menu, and all other clients see an alternate menu.
+  -- client menu just shows number of players connected, their names, and their numbers
+  -- clients also have a UI Box to change their name from the default.
+  -- host menu allows for loading, configuring and saving of maps
+  -- host menu also allows for complexity configuration
+  -- host also has the UI box for changing their name
+  -- host can kick players, and can also start the game
+Once "Start" is clicked, the game manager runs SetupGame().
+Each player then receives their UI Box.
+
+The start player is chosen randomly. They are informed it is their turn via StartTurn(playernumber)
+They can then perform their actions -- they are handled by calling out to the GameManager.
+  (e.g. they broadcast where they're moving; they broadcast when they want a card; etc)
+When they're done with their turn, they tell the GameManager -- who then continues by informing the next player, and so on.
